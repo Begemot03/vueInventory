@@ -13,10 +13,17 @@ const emptyCell = {
 }
 
 export const useInventoryStore = defineStore('inventory', () => {
-  	const items = ref<Array<IInventoryCell>>(
-		Array.from({ length: 25 }, (_, i) => ({ count: 1, itemType: Math.floor(Math.random() * 3), id: i }))
+	const items = ref<Array<IInventoryCell>>(
+		Array.from({ length: 25 }, (_, i) => ({ count: Math.floor(Math.random() * 4) + 2, itemType: Math.floor(Math.random() * 4), id: i }))
 	);
 
+	const saves = localStorage.getItem("saves");
+	
+	if(saves) {
+		const i: Array<IInventoryCell> = JSON.parse(saves).items;
+		items.value = i;
+	}
+  	
 	function addItem(id: number, newItem: IInventoryCell) {
 		items.value[id] = {
 			id,
@@ -46,6 +53,22 @@ export const useInventoryStore = defineStore('inventory', () => {
 			id,
 		};
 	}
+
+	function removeItemCount(id: number, count: number): void {
+		if(items.value[id].count <= count) {
+			items.value[id] = {
+				...emptyCell,
+				id,
+			};
+		} else {
+			items.value[id].count -= count;
+		}
+	}
+
+	function isEmpty(id: number): boolean {
+		if(items.value[id].itemType === 0) return true;
+		return false;
+	}
   
   	return { 
 		items, 
@@ -53,5 +76,7 @@ export const useInventoryStore = defineStore('inventory', () => {
 		getItem,
 		removeItem,
 		swapTwoCells,
+		isEmpty,
+		removeItemCount,
 	};
 })

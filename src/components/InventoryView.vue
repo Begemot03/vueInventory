@@ -2,31 +2,71 @@
 import { ref } from 'vue';
 import InventoryCell from './InventoryCell.vue';
 import InventoryModal from './InventoryModal.vue';
+import { useInventoryStore } from '@/stores/inventory';
 
-const curId = ref(0);
+let isFirst = ref(true);
+let curId = ref(0);
+let isModalHidden = ref(true);
+const inventoryStore = useInventoryStore();
+
+function openModal(id: number) {
+    if(inventoryStore.isEmpty(id)) return;
+
+    curId.value = id;
+    isModalHidden.value = false;
+}
+
+function hideModal() {
+    isModalHidden.value = true;
+}
+
+function dropCb(newId: number) {
+    curId.value = newId;
+    isFirst.value = false;
+}
+
+inventoryStore.$subscribe((mutation, state) => {
+    localStorage.setItem("saves", JSON.stringify(state));
+});
 
 </script>
 
 <template>
-    <div>
-        <div class="inventory">
-        <!-- Создаем 25 ячеек инвенторя и даем им каждый id -->
+    <div class="inventory"
+        @click="() => isFirst = false"
+    >
+        <div class="ghost-sidebar">
+            <img src="../assets/imgBlur.png">
+            <div class="ghost ghost-h1 ghost-90"></div>
+            <div class="ghost ghost-p ghost-60"></div>
+            <div class="ghost ghost-p ghost-90"></div>
+            <div class="ghost ghost-p ghost-80"></div>
+            <div class="ghost ghost-p ghost-70"></div>
+            <div class="ghost ghost-p ghost-60"></div>
+            <div class="ghost ghost-t ghost-50"></div>
+        </div>
+        <div class="inventory-view">
+            <!-- Создаем 25 ячеек инвенторя и даем им каждый id -->
             <InventoryCell
                 v-for="i in 25"
+                :class="isFirst ? '' : (i - 1 === curId ? 'selected' : '')"
                 :key="i"
                 :id="i - 1"
-                @click="() => { curId = i - 1; }"
+                @click="() => { openModal(i - 1) }"
+                @dropcb="dropCb"
             />
         </div>
-        <InventoryModal :curCellId="curId"/>
+        <div class="ghost-footer">
+            <div class="ghost"></div>
+        </div>
+        <InventoryModal
+            :isHidden="isModalHidden"
+            :curCellId=curId
+            @close="() => hideModal()"
+        />
     </div>
-    
 </template>
 
-<style lang="scss" scoped>
-.inventory {
-    display: grid;
-    grid-template-columns: repeat(5, 128px);
-    gap: 4px;
-}
+<style lang="scss">
+
 </style>
